@@ -1,52 +1,47 @@
-# colab-lfs-demo
+# test-dg-2
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_GITHUB_USER/colab-lfs-demo/blob/main/notebooks/lfs_demo.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/studiorabota/test-dg-2/blob/main/notebooks/windkit_demo.ipynb)
 
-Small test repo: a Jupyter notebook that opens in Google Colab and loads a ~6 MB data file stored with **Git LFS**.
+Test repo: a notebook that opens in Google Colab, imports a local Python package (`windkit`), and loads data and images stored with **Git LFS**.
+
+![Capacity factor and turbine layout](images/turbine_layout.png)
 
 ```
 .
-├── .gitattributes            # *.npy, *.nc, *.parquet … → Git LFS
+├── .gitattributes             # *.npy, *.png, *.jpg … → Git LFS
 ├── data/
-│   └── wind_speed_field.npy  # synthetic (24 h × 256 × 256) wind field, stored in LFS
+│   └── wind_speed_field.npy   # synthetic (24 h × 256 × 256) wind field, ~6 MB, LFS
+├── images/                    # PNGs, LFS
+│   ├── power_curve.png
+│   ├── turbine_layout.png
+│   └── wind_map.png
 ├── notebooks/
-│   └── lfs_demo.ipynb        # clones the repo, pulls LFS files, plots the data
-└── publish.sh                # creates the GitHub repo and pushes
+│   └── windkit_demo.ipynb     # clones the repo, pulls LFS, imports windkit
+├── windkit/                   # local Python package
+│   ├── __init__.py
+│   ├── io.py                  # load_field, is_lfs_pointer
+│   ├── stats.py               # summary, power_curve, capacity_factor
+│   └── plotting.py            # plot_mean_field, plot_timeseries
+├── push.sh
+└── requirements.txt
 ```
 
 ## Publish
 
-Needs `git`, `git-lfs` and the GitHub CLI (`gh auth login` once).
+Use the command line, not the GitHub upload page: the upload page skips `.gitattributes`, so nothing ends up in LFS.
 
-```bash
-./publish.sh <your-github-user>                         # public repo "colab-lfs-demo"
-./publish.sh <your-github-user> my-repo-name --private  # private, custom name
-```
-
-The script fills in your username in this README and in the notebook, commits, and pushes.
-
-### Manual alternative (no `gh`)
-
-1. Create an empty repo on github.com.
-2. Replace `YOUR_GITHUB_USER` (and the repo name, if different) in `README.md` and `notebooks/lfs_demo.ipynb`.
+1. On GitHub, create a new **empty** repo named `test-dg-2` under `studiorabota` (don't add a README, .gitignore or license).
+2. Install `git-lfs` if you don't have it (`brew install git-lfs`).
 3. Run:
    ```bash
-   git init -b main
-   git lfs install --local
-   git add .gitattributes && git add .
-   git commit -m "Colab + Git LFS demo"
-   git remote add origin https://github.com/<user>/<repo>.git
-   git push -u origin main
+   ./push.sh
    ```
 
 ## Test
 
-1. On GitHub, `data/wind_speed_field.npy` should show **"Stored with Git LFS"**.
-2. Click **Open in Colab** and choose **Runtime → Run all**.
-3. The notebook checks that it got the real file (not an LFS pointer) and plots it.
+1. On GitHub, `data/wind_speed_field.npy` and the PNGs should show **"Stored with Git LFS"**.
+2. Click **Open in Colab** above and choose **Runtime → Run all**.
 
-## How it works / gotchas
+## How the modules are imported
 
-- **The Colab button only loads the `.ipynb`**, not the repo. That's why the notebook clones the repo and runs `git lfs pull` itself.
-- **Private repos:** Colab will ask to authorize GitHub when you open the notebook. Cloning *inside* the notebook needs a token: add a fine-grained token with read access as a Colab secret named `GH_TOKEN`.
-- **Bandwidth:** every new Colab session downloads the LFS files again, which counts against your GitHub LFS bandwidth quota.
+After cloning, the notebook adds the repo folder to `sys.path`, so `import windkit` works without installing anything. If you change a module and push, re-run the clone cell (it pulls the latest version) and restart the runtime so Python re-imports it.
